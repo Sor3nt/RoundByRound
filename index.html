@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>RoundByRound (♻) - dApp - Ethereum</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.3.5/web3.min.js"></script>
+</head>
+<body>
+
+<style>
+    html, body{
+        margin: 0;
+        padding: 0;
+        font-family: 'Comic Sans MS';
+    }
+    button {
+
+        font-size: 2rem;
+        border: 1px solid black;
+        border-radius: 10px;
+        color: #fff;
+        background-color: #2dce89;
+        box-shadow: 0 4px 6px rgba(50, 50, 93, .11), 0 1px 3px rgba(0, 0, 0, .08);
+        font-weight: 600;
+        line-height: 1.5;
+        display: inline-block;
+        padding: .625rem 1.25rem;
+        cursor: pointer;
+        user-select: none;
+        transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        text-align: center;
+        vertical-align: middle;
+        position: relative;
+        top: 138px;
+    }
+
+    .drop-box {
+        width: 100%;
+        margin: 0 auto;
+        height: 450px;
+        border: 1px solid black;
+        text-align: center;
+        position:relative;
+        background: beige;
+    }
+
+    .drop-box:before {
+        content: "♻";
+        width: 100%;
+        height: 100%;
+        font-size: 300px;
+        line-height: 150px;
+        position:absolute;
+        left:0;
+        top:200px;
+        color: green;
+    }
+</style>
+<div style="text-align: center;width: 100%;">
+
+    <h1>RoundByRound (♻)<br/><small> ~ experimental contract on Ethereum ~ </small></h1>
+
+    <div class="drop-box">
+
+        <p>
+            We a currently at round <span style="font-weight: bold;" id="curRound"></span> and
+            <span id="roundEndIn" style="font-weight: bold;"></span> / <span style="font-weight: bold;">16</span> tokens are left!
+        </p>
+        <p>
+            You can join the round with <span id="curPrice" style="font-weight: bold;"></span>
+            and your reward* will be <span id="curReward" style="font-weight: bold;"></span> in round <span style="font-weight: bold;" id="nextRound"></span>
+        </p>
+
+        <button id="join" style="">Join round!</button>
+
+    </div>
+
+    <h2>What is RbR (RoundByRound) ?</h2>
+    <p>
+        There are <b>16 tokens</b> that are being <b>sold in circulations</b>
+        all tokens has the same price (begin with 300 wei)</p>
+    <p>
+        A token can be bought, but <b>not sold or transferred</b>!
+    </p>
+    <p>
+        <b>Every time 16 tokens have been sold, a new round begins</b>
+    </p>
+
+    <p>
+        At the beginning of each round, the price of all tokens increases
+    </p>
+
+    <h3>What happens with Token 1 at Round 1 ? Token 1 has already a holder?!</h3>
+    <p>
+        The current owner of Token 0 will receive 2/3 of the current price and the token will be transferred to the new holder
+    </p>
+
+    <div style="width: 400px; margin: 0 auto;">
+        <b>Example</b>
+        <ul style="text-align: left">
+            <li>Token 1 was bought at Round 0 for <b>300wei</b>.</li>
+            <li>The next Round (1) will increase the price to <b>900wei</b></li>
+            <lI>Once Token 1 got sold, the current owner receive <b>600wei</b>. (+100%)</lI>
+        </ul>
+    </div>
+
+    <h3>Are there contract events out ?</h3>
+    <p>
+        Yes, there are 3 events fired, <b>"Transfer", "NewRound", "Reward"</b>
+    </p>
+
+    <h3>Sound strange, where is the source code ?</h3>
+    <p>
+        Checkout Etherscan, <a href="https://etherscan.io/address/0xFa8F0150A53A7a3BC2470a04A208536D129DeFa6#code" target="_blank">contract tab</a>. The whole contract is published also on <a href="https://github.com/Sor3nt/RoundByRound" target="_blank">GitHub</a>
+
+    </p>
+
+    <h3>Okay u got me, how can i play these stupid game ?</h3>
+    <p>Just hit the <b>"Join round!"</b> button!</p>
+
+</div>
+
+
+
+<script>
+    async function dApp() {
+
+        if (Web3.givenProvider === null){
+            //todo
+            return false;
+        }
+
+        let web3 = new Web3(Web3.givenProvider);
+
+        const accounts = await web3.eth.requestAccounts();
+        if (accounts.length === 0){
+            //TODO Show no acccounts
+        }else{
+            let userAddress = accounts[0];
+
+            let contract = new web3.eth.Contract(
+                [
+                    {
+                        "constant": true,
+                        "inputs": [],
+                        "name": "currentIndex",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "payable": false,
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "constant": true,
+                        "inputs": [],
+                        "name": "price",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "payable": false,
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "constant": true,
+                        "inputs": [],
+                        "name": "round",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "payable": false,
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "constant": false,
+                        "inputs": [],
+                        "name": "buyIndex",
+                        "outputs": [],
+                        "payable": true,
+                        "stateMutability": "payable",
+                        "type": "function"
+                    }
+                ], "0xFa8F0150A53A7a3BC2470a04A208536D129DeFa6", { gasLimit: "62000" }
+            );
+
+
+            let price = 0;
+            contract.methods.price().call({ from: userAddress }, function (err, _price) {
+                price = _price;
+                document.getElementById('curPrice').innerHTML = price + ' WEI';
+                // document.getElementById('nextPrice').innerHTML = parseInt(price) * 3;
+                document.getElementById('curReward').innerHTML = (parseInt(price) * 2) + '<br/>WEI';
+            });
+
+            let round;
+            contract.methods.round().call({ from: userAddress }, function (err, _round) {
+                round = _round;
+                document.getElementById('curRound').innerHTML = round;
+                document.getElementById('nextRound').innerHTML = parseInt(round) + 1;
+            });
+
+            contract.methods.currentIndex().call({ from: userAddress }, function (err, currentIndex) {
+                // document.getElementById('curIndex').innerHTML = currentIndex;
+
+
+                document.getElementById('roundEndIn').innerHTML = 16 - parseInt(currentIndex)
+            });
+
+            document.getElementById('join').onclick = async function(){
+
+                contract.methods.buyIndex().send({
+                    from: userAddress,
+                    gasPrice: 70 * 1000000000,
+                    gas: price.gasPrice,
+                    value: price
+                }, function (error, tx) {
+                    console.log("error: ", error);
+                    console.log("transaction: ", tx);
+                });
+
+            };
+
+        }
+    }
+    dApp();
+
+</script>
+
+</body>
+</html>
